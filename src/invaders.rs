@@ -1,5 +1,5 @@
 use crate::display::Display;
-use emu_8080::emulator::State8080;
+use emu_8080::emulator::{IOHandler, State8080};
 use std::time::{Duration, Instant};
 
 const CYCLES_PER_FRAME: u64 = 4_000_000 / 60;
@@ -11,9 +11,16 @@ pub enum FrameHalf {
     Bottom,
 }
 
+#[derive(Default)]
+pub struct InvadersIOHandler {
+    shift_amount: u8,
+    shift_data: u16,
+}
+
 pub struct Invaders {
     state: State8080,
     display: Display,
+    io_handler: InvadersIOHandler,
 }
 
 impl FrameHalf {
@@ -22,6 +29,34 @@ impl FrameHalf {
             FrameHalf::Top => FrameHalf::Bottom,
             FrameHalf::Bottom => FrameHalf::Top,
         }
+    }
+}
+
+impl IOHandler for InvadersIOHandler {
+    fn inp(&mut self, state: State8080, v: u8) -> State8080 {
+        let a = match v {
+            0 => 1,
+            1 => 0,
+            2 => 0,
+            3 => ((self.shift_data >> u16::from(8 - self.shift_amount)) & 0xff) as u8,
+            _ => 0,
+        };
+
+        println!("Inp!");
+
+        state.setting_a(a)
+    }
+
+    fn out(&mut self, state: State8080, v: u8) -> State8080 {
+        match v {
+            2 => self.shift_amount = state.a & 0x7,
+            4 => self.shift_data = (state.a as u16) << 8 | self.shift_data >> 8,
+            _ => {}
+        }
+
+        println!("Out!");
+
+        state
     }
 }
 
@@ -46,7 +81,11 @@ impl Invaders {
             );
         let display = Display::new();
 
-        Invaders { state, display }
+        Invaders {
+            state,
+            display,
+            io_handler: InvadersIOHandler::default(),
+        }
     }
 
     pub fn run(mut self) {
@@ -73,7 +112,7 @@ impl Invaders {
         let mut state = self.state;
         let mut cycles_spent = 0;
         while cycles_spent < CYCLES_PER_FRAME / 2 {
-            state = state.evaluating_next();
+            state = state.evaluating_next(Some(&mut self.io_handler));
             let cycles = state.last_cycles();
 
             cycles_spent += cycles as u64;
