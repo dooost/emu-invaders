@@ -62,23 +62,10 @@ impl IOHandler for InvadersIOHandler {
 
 impl Invaders {
     pub fn new() -> Self {
-        let state = State8080::new()
-            .loading_file_into_memory_at(
-                "/Users/prezi/Developer/emu-8080/resources/invaders.h",
-                0x0000,
-            )
-            .loading_file_into_memory_at(
-                "/Users/prezi/Developer/emu-8080/resources/invaders.g",
-                0x0800,
-            )
-            .loading_file_into_memory_at(
-                "/Users/prezi/Developer/emu-8080/resources/invaders.f",
-                0x1000,
-            )
-            .loading_file_into_memory_at(
-                "/Users/prezi/Developer/emu-8080/resources/invaders.e",
-                0x1800,
-            );
+        let state = State8080::new().loading_file_into_memory_at(
+            "/Users/prezi/Developer/emu-invaders/res/invaders.rom",
+            0x0000,
+        );
         let display = Display::new();
 
         Invaders {
