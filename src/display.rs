@@ -2,8 +2,8 @@ use minifb::{Scale, Window, WindowOptions};
 
 use crate::invaders::FrameHalf;
 
-pub const SCREEN_WIDTH: usize = 224;
-pub const SCREEN_HEIGHT: usize = 256;
+const SCREEN_WIDTH: usize = 224;
+const SCREEN_HEIGHT: usize = 256;
 
 pub struct Display {
     window: Window,

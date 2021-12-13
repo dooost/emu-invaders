@@ -45,8 +45,6 @@ impl IOHandler for InvadersIOHandler {
             _ => 0,
         };
 
-        println!("Inp!");
-
         state.setting_a(a)
     }
 
@@ -56,8 +54,6 @@ impl IOHandler for InvadersIOHandler {
             4 => self.shift_data = (state.a as u16) << 8 | self.shift_data >> 8,
             _ => {}
         }
-
-        println!("Out!");
 
         state
     }
