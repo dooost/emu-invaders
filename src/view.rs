@@ -1,6 +1,5 @@
 use minifb::{Scale, Window, WindowOptions};
 
-use crate::invaders::FrameHalf;
 use crate::io::{InvadersIOHandler, InvadersKey};
 
 const SCREEN_WIDTH: usize = 224;
@@ -29,30 +28,60 @@ impl InvadersView {
     }
 
     pub fn draw(&mut self, vmem: &[u8; 0x1C00]) {
-        // for i in
+        // Color regions (Ref: https://github.com/superzazu/invaders/blob/master/src/invaders.c):
+        // ,_______________________________.
+        // |WHITE            ^             |
+        // |                32             |
+        // |                 v             |
+        // |-------------------------------|
+        // |RED              ^             |
+        // |                32             |
+        // |                 v             |
+        // |-------------------------------|
+        // |WHITE                          |
+        // |         < 224 >               |
+        // |                               |
+        // |                 ^             |
+        // |                120            |
+        // |                 v             |
+        // |                               |
+        // |                               |
+        // |                               |
+        // |-------------------------------|
+        // |GREEN                          |
+        // | ^                  ^          |
+        // |56        ^        56          |
+        // | v       72         v          |
+        // |____      v      ______________|
+        // |  ^  |          | ^            |
+        // |<16> |  < 118 > |16   < 122 >  |
+        // |  v  |          | v            |
+        // |WHITE|          |         WHITE|
+        // `-------------------------------'
 
-        // let (start_memory, start_pixel) = if half == FrameHalf::Top {
-        //     (0, 0)
-        // } else {
-        //     (0xE00, 0x7000)
-        // };
+        for (i, byte) in vmem.iter().enumerate() {
+            let y = i * 8 / SCREEN_HEIGHT as usize;
+            let base_x = i * 8 % SCREEN_HEIGHT as usize;
 
-        let (start_memory, start_pixel) = (0, 0);
+            // Each byte contains 8 pixels
+            for shift in 0..8 {
+                let x = base_x + shift;
 
-        for offset in 0..0x1C00 {
-            let byte = vmem[start_memory + offset];
+                let canvas_x = y;
+                let canvas_y = SCREEN_HEIGHT - x - 1;
 
-            for bit in 0..8 {
-                let color: u32 = if byte & (1 << bit) == 0 {
+                let color: u32 = if (byte >> shift) & 1 == 0 {
                     0x00_00_00_00
+                } else if canvas_y >= 32 && canvas_y < 64 {
+                    0x00_ff_00_00
+                } else if canvas_y >= 184 && (canvas_y < 240 || (canvas_x >= 16 && canvas_x < 134))
+                {
+                    0x00_00_ff_00
                 } else {
-                    0xff_ff_ff_ff
+                    0x00_ff_ff_ff
                 };
 
-                let x = (start_pixel + 8 * offset + bit) / SCREEN_HEIGHT;
-                let y = SCREEN_HEIGHT - 1 - (start_pixel + 8 * offset + bit) % SCREEN_HEIGHT;
-
-                self.buf[x + y * SCREEN_WIDTH] = color;
+                self.buf[canvas_x + canvas_y * SCREEN_WIDTH] = color;
             }
         }
 
