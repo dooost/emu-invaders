@@ -1,5 +1,5 @@
-use crate::display::Display;
-use emu_8080::emulator::{IOHandler, State8080};
+use crate::{display::Display, io::InvadersIOHandler};
+use emu_8080::emulator::State8080;
 use std::time::{Duration, Instant};
 
 const CYCLES_PER_SEC: u64 = 2_000_000;
@@ -14,12 +14,6 @@ pub enum FrameHalf {
     Bottom,
 }
 
-#[derive(Default)]
-pub struct InvadersIOHandler {
-    shift_amount: u8,
-    shift_data: u16,
-}
-
 pub struct Invaders {
     state: State8080,
     display: Display,
@@ -32,30 +26,6 @@ impl FrameHalf {
             FrameHalf::Top => FrameHalf::Bottom,
             FrameHalf::Bottom => FrameHalf::Top,
         }
-    }
-}
-
-impl IOHandler for InvadersIOHandler {
-    fn inp(&mut self, state: State8080, v: u8) -> State8080 {
-        let a = match v {
-            0 => 1,
-            1 => 0,
-            2 => 0,
-            3 => ((self.shift_data >> u16::from(8 - self.shift_amount)) & 0xff) as u8,
-            _ => 0,
-        };
-
-        state.setting_a(a)
-    }
-
-    fn out(&mut self, state: State8080, v: u8) -> State8080 {
-        match v {
-            2 => self.shift_amount = state.a & 0x7,
-            4 => self.shift_data = (state.a as u16) << 8 | self.shift_data >> 8,
-            _ => {}
-        }
-
-        state
     }
 }
 
@@ -113,5 +83,6 @@ impl Invaders {
     fn update_screen(&mut self, half: FrameHalf) {
         let vmem = &self.state.memory[0x2400..0x4000];
         self.display.draw(vmem.try_into().unwrap(), half);
+        self.display.update_keyboard(&mut self.io_handler);
     }
 }

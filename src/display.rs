@@ -1,6 +1,7 @@
 use minifb::{Scale, Window, WindowOptions};
 
 use crate::invaders::FrameHalf;
+use crate::io::{InvadersIOHandler, InvadersKey};
 
 const SCREEN_WIDTH: usize = 224;
 const SCREEN_HEIGHT: usize = 256;
@@ -58,5 +59,25 @@ impl Display {
         self.window
             .update_with_buffer(&self.buf, SCREEN_WIDTH, SCREEN_HEIGHT)
             .expect("Failed to update window with buffer");
+    }
+
+    pub fn update_keyboard(&mut self, io_handler: &mut InvadersIOHandler) {
+        let keys = vec![
+            (minifb::Key::Key1, InvadersKey::P1Start),
+            (minifb::Key::W, InvadersKey::P1Shoot),
+            (minifb::Key::A, InvadersKey::P1Left),
+            (minifb::Key::D, InvadersKey::P1Right),
+            (minifb::Key::Key2, InvadersKey::P2Start),
+            (minifb::Key::Up, InvadersKey::P2Shoot),
+            (minifb::Key::Left, InvadersKey::P2Left),
+            (minifb::Key::Right, InvadersKey::P2Right),
+            (minifb::Key::C, InvadersKey::Coin),
+            (minifb::Key::T, InvadersKey::Tilt),
+        ];
+
+        for (win_key, inv_key) in &keys {
+            let is_down = self.window.is_key_down(*win_key);
+            io_handler.handle_key_change(*inv_key, is_down);
+        }
     }
 }

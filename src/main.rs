@@ -1,5 +1,6 @@
 mod display;
 mod invaders;
+mod io;
 
 use invaders::Invaders;
 
