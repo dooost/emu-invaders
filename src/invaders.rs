@@ -51,14 +51,14 @@ impl Invaders {
         let mut next_interrupt_kind = FrameHalf::Top;
 
         loop {
+            self.update_view();
+
             let now = Instant::now();
 
             if let None = last_time {
                 last_time = Some(now);
                 next_interrupt_time = Some(now + Duration::from_micros(CYCLES_PER_FRAME / 2));
             }
-
-            let redraw_frame_half = next_interrupt_kind;
 
             if self.state.interrupt_enabled && now > next_interrupt_time.unwrap() {
                 self.state = self.state.generating_interrupt(next_interrupt_kind as u16);
@@ -75,15 +75,13 @@ impl Invaders {
                 cycles_ran += self.state.last_cycles() as u128;
             }
 
-            self.update_screen(redraw_frame_half);
-
             last_time = Some(now);
         }
     }
 
-    fn update_screen(&mut self, half: FrameHalf) {
+    fn update_view(&mut self) {
         let vmem = &self.state.memory[0x2400..0x4000];
-        self.view.draw(vmem.try_into().unwrap(), half);
+        self.view.draw(vmem.try_into().unwrap());
         self.view.update_keyboard(&mut self.io_handler);
     }
 }

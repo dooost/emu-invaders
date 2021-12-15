@@ -28,14 +28,18 @@ impl InvadersView {
         view
     }
 
-    pub fn draw(&mut self, vmem: &[u8; 0x1C00], half: FrameHalf) {
-        let (start_memory, start_pixel) = if half == FrameHalf::Top {
-            (0, 0)
-        } else {
-            (0xE00, 0x7000)
-        };
+    pub fn draw(&mut self, vmem: &[u8; 0x1C00]) {
+        // for i in
 
-        for offset in 0..0xE00 {
+        // let (start_memory, start_pixel) = if half == FrameHalf::Top {
+        //     (0, 0)
+        // } else {
+        //     (0xE00, 0x7000)
+        // };
+
+        let (start_memory, start_pixel) = (0, 0);
+
+        for offset in 0..0x1C00 {
             let byte = vmem[start_memory + offset];
 
             for bit in 0..8 {
