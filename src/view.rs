@@ -6,12 +6,12 @@ use crate::io::{InvadersIOHandler, InvadersKey};
 const SCREEN_WIDTH: usize = 224;
 const SCREEN_HEIGHT: usize = 256;
 
-pub struct Display {
+pub struct InvadersView {
     window: Window,
     buf: [u32; SCREEN_WIDTH * SCREEN_HEIGHT],
 }
 
-impl Display {
+impl InvadersView {
     pub fn new() -> Self {
         let mut options = WindowOptions::default();
         options.scale = Scale::X2;
@@ -19,13 +19,13 @@ impl Display {
         let window = Window::new("Space Invaders", SCREEN_WIDTH, SCREEN_HEIGHT, options)
             .expect("Failed to create window");
 
-        let mut display = Self {
+        let mut view = Self {
             window,
             buf: [0; SCREEN_WIDTH * SCREEN_HEIGHT],
         };
-        display.update_with_buffer();
+        view.update_with_buffer();
 
-        display
+        view
     }
 
     pub fn draw(&mut self, vmem: &[u8; 0x1C00], half: FrameHalf) {

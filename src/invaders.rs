@@ -1,4 +1,5 @@
-use crate::{display::Display, io::InvadersIOHandler};
+use crate::io::InvadersIOHandler;
+use crate::view::InvadersView;
 use emu_8080::emulator::State8080;
 use std::time::{Duration, Instant};
 
@@ -16,7 +17,7 @@ pub enum FrameHalf {
 
 pub struct Invaders {
     state: State8080,
-    display: Display,
+    view: InvadersView,
     io_handler: InvadersIOHandler,
 }
 
@@ -35,11 +36,11 @@ impl Invaders {
             "/Users/prezi/Developer/emu-invaders/res/invaders.rom",
             0x0000,
         );
-        let display = Display::new();
+        let view = InvadersView::new();
 
         Invaders {
             state,
-            display,
+            view,
             io_handler: InvadersIOHandler::default(),
         }
     }
@@ -82,7 +83,7 @@ impl Invaders {
 
     fn update_screen(&mut self, half: FrameHalf) {
         let vmem = &self.state.memory[0x2400..0x4000];
-        self.display.draw(vmem.try_into().unwrap(), half);
-        self.display.update_keyboard(&mut self.io_handler);
+        self.view.draw(vmem.try_into().unwrap(), half);
+        self.view.update_keyboard(&mut self.io_handler);
     }
 }
