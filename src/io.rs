@@ -2,9 +2,9 @@ use crate::sound::SoundController;
 use emu_8080::emulator::{IOHandler, State8080};
 
 pub struct InvadersIOHandler {
-    port0: u8,
-    port1: u8,
-    port2: u8,
+    in0: u8,
+    in1: u8,
+    in2: u8,
     shift_amount: u8,
     shift_data: u16,
     sound3: u8,
@@ -16,9 +16,9 @@ pub struct InvadersIOHandler {
 impl InvadersIOHandler {
     pub fn new() -> Self {
         Self {
-            port0: 0,
-            port1: 0,
-            port2: 0,
+            in0: 0,
+            in1: 0,
+            in2: 0,
             shift_amount: 0,
             shift_data: 0,
             sound3: 0,
@@ -32,9 +32,9 @@ impl InvadersIOHandler {
         let bit = key.bit();
 
         let port_ref = match key.port() {
-            InputPort::Port0 => &mut self.port0,
-            InputPort::Port1 => &mut self.port1,
-            InputPort::Port2 => &mut self.port2,
+            InputPort::_Port0 => &mut self.in0,
+            InputPort::Port1 => &mut self.in1,
+            InputPort::Port2 => &mut self.in2,
         };
 
         if is_down {
@@ -48,9 +48,9 @@ impl InvadersIOHandler {
 impl IOHandler for InvadersIOHandler {
     fn inp(&mut self, state: State8080, port: u8) -> State8080 {
         let a = match port {
-            0 => self.port0,
-            1 => self.port1,
-            2 => self.port2,
+            0 => self.in0,
+            1 => self.in1,
+            2 => self.in2,
             3 => ((self.shift_data >> u16::from(8 - self.shift_amount)) & 0xff) as u8,
             _ => 0,
         };
@@ -69,10 +69,15 @@ impl IOHandler for InvadersIOHandler {
                 for (i, (new, old)) in new_sounds.zip(old_sounds).enumerate() {
                     if new && !old {
                         // Play sound if the new value is set and was not previously
-                        self.sound_controller.play_once(i);
+                        // UFO sound should be played on loop
+                        if i == 0 {
+                            self.sound_controller.play_repeating(i);
+                        } else {
+                            self.sound_controller.play_once(i);
+                        }
                     } else if i == 0 && !new && old {
-                        // Stop playing when changed to false for UFO sound
-                        // self.sound_controller.stop_sound(i);
+                        // Stop playing UFO sound when changed to false
+                        self.sound_controller.stop_repeating(i);
                     }
                 }
                 self.sound3 = val;
@@ -103,7 +108,7 @@ fn bit(val: u8, bit_i: u8) -> bool {
 
 #[derive(Clone, Copy)]
 enum InputPort {
-    Port0,
+    _Port0,
     Port1,
     Port2,
 }
