@@ -1,5 +1,6 @@
 mod invaders;
 mod io;
+mod sound;
 mod view;
 
 use invaders::Invaders;

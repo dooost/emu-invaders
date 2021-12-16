@@ -36,12 +36,11 @@ impl Invaders {
             "/Users/prezi/Developer/emu-invaders/res/invaders.rom",
             0x0000,
         );
-        let view = InvadersView::new();
 
         Invaders {
             state,
-            view,
-            io_handler: InvadersIOHandler::default(),
+            view: InvadersView::new(),
+            io_handler: InvadersIOHandler::new(),
         }
     }
 

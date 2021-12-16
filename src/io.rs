@@ -1,15 +1,33 @@
+use crate::sound::SoundController;
 use emu_8080::emulator::{IOHandler, State8080};
 
-#[derive(Default)]
 pub struct InvadersIOHandler {
     port0: u8,
     port1: u8,
     port2: u8,
     shift_amount: u8,
     shift_data: u16,
+    sound3: u8,
+    sound5: u8,
+
+    sound_controller: SoundController,
 }
 
 impl InvadersIOHandler {
+    pub fn new() -> Self {
+        Self {
+            port0: 0,
+            port1: 0,
+            port2: 0,
+            shift_amount: 0,
+            shift_data: 0,
+            sound3: 0,
+            sound5: 0,
+
+            sound_controller: SoundController::new(),
+        }
+    }
+
     pub fn handle_key_change(&mut self, key: InvadersKey, is_down: bool) {
         let bit = key.bit();
 
@@ -28,8 +46,8 @@ impl InvadersIOHandler {
 }
 
 impl IOHandler for InvadersIOHandler {
-    fn inp(&mut self, state: State8080, v: u8) -> State8080 {
-        let a = match v {
+    fn inp(&mut self, state: State8080, port: u8) -> State8080 {
+        let a = match port {
             0 => self.port0,
             1 => self.port1,
             2 => self.port2,
@@ -40,15 +58,47 @@ impl IOHandler for InvadersIOHandler {
         state.setting_a(a)
     }
 
-    fn out(&mut self, state: State8080, v: u8) -> State8080 {
-        match v {
-            2 => self.shift_amount = state.a & 0x7,
-            4 => self.shift_data = (state.a as u16) << 8 | self.shift_data >> 8,
+    fn out(&mut self, state: State8080, port: u8) -> State8080 {
+        let val = state.a;
+        match port {
+            2 => self.shift_amount = val & 0x7,
+            3 => {
+                let new_sounds = (0..4).map(|i| bit(val, i));
+                let old_sounds = (0..4).map(|i| bit(self.sound3, i));
+
+                for (i, (new, old)) in new_sounds.zip(old_sounds).enumerate() {
+                    if new && !old {
+                        // Play sound if the new value is set and was not previously
+                        self.sound_controller.play_once(i);
+                    } else if i == 0 && !new && old {
+                        // Stop playing when changed to false for UFO sound
+                        // self.sound_controller.stop_sound(i);
+                    }
+                }
+                self.sound3 = val;
+            }
+            4 => self.shift_data = (val as u16) << 8 | self.shift_data >> 8,
+            5 => {
+                let new_sounds = (0..4).map(|i| bit(val, i));
+                let old_sounds = (0..4).map(|i| bit(self.sound5, i));
+
+                for (i, (new, old)) in new_sounds.zip(old_sounds).enumerate() {
+                    if new && !old {
+                        // Play sound if the new value is set and was not previously
+                        self.sound_controller.play_once(i + 4);
+                    }
+                }
+                self.sound5 = val;
+            }
             _ => {}
         }
 
         state
     }
+}
+
+fn bit(val: u8, bit_i: u8) -> bool {
+    val & (1 << bit_i) > 0
 }
 
 #[derive(Clone, Copy)]
