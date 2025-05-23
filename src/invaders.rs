@@ -33,7 +33,7 @@ impl FrameHalf {
 impl Invaders {
     pub fn new() -> Self {
         let state = State8080::new().loading_file_into_memory_at(
-            "/Users/prezi/Developer/emu-invaders/res/invaders.rom",
+            "res/invaders.rom",
             0x0000,
         );
 
